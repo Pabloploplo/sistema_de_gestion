@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registros de Acceso</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .logs-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        .btn-success {
+            background-color: #059669;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+        }
+
+        .success { color: #059669; }
+        .failed { color: #dc2626; }
+
+        .date-filter {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .date-filter input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="logs-container">
+        <div class="header">
+            <h1>Registros de Acceso al Sistema</h1>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="loadLogs()">Actualizar</button>
+                <button class="btn btn-success" onclick="exportToExcel()">Exportar a Excel</button>
+            </div>
+        </div>
+
+        <div class="date-filter">
+            <label>Filtrar por fecha:</label>
+            <input type="date" id="startDate" onchange="filterLogs()">
+            <span>hasta</span>
+            <input type="date" id="endDate" onchange="filterLogs()">
+        </div>
+
+        <div id="logsTable"></div>
+    </div>
+
+    <script>
+        let allLogs = []; // Almacenar todos los logs
+
+        async function loadLogs() {
+            try {
+                const response = await fetch('/api/logs');
+                allLogs = await response.json();
+                displayLogs(allLogs);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('logsTable').innerHTML = '<p>Error al cargar los registros</p>';
+            }
+        }
+
+        function displayLogs(logs) {
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Acción</th>
+                            <th>Fecha y Hora</th>
+                            <th>IP</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            logs.forEach(log => {
+                tableHTML += `
+                    <tr>
+                        <td>${log.id}</td>
+                        <td>${log.username}</td>
+                        <td>${log.action}</td>
+                        <td>${new Date(log.timestamp).toLocaleString()}</td>
+                        <td>${log.ip_address}</td>
+                        <td class="${log.status === 'success' ? 'success' : 'failed'}">${log.status}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += '</tbody></table>';
+            document.getElementById('logsTable').innerHTML = tableHTML;
+        }
+
+        function filterLogs() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (!startDate && !endDate) {
+                displayLogs(allLogs);
+                return;
+            }
+
+            const filteredLogs = allLogs.filter(log => {
+                const logDate = new Date(log.timestamp).toISOString().split('T')[0];
+                if (startDate && endDate) {
+                    return logDate >= startDate && logDate <= endDate;
+                } else if (startDate) {
+                    return logDate >= startDate;
+                } else {
+                    return logDate <= endDate;
+                }
+            });
+
+            displayLogs(filteredLogs);
+        }
+
+        function exportToExcel() {
+            // Crear una matriz de datos para Excel
+            const data = [
+                ['ID', 'Usuario', 'Acción', 'Fecha y Hora', 'IP', 'Estado'] // Encabezados
+            ];
+
+            // Agregar los datos de los logs
+            allLogs.forEach(log => {
+                data.push([
+                    log.id,
+                    log.username,
+                    log.action,
+                    new Date(log.timestamp).toLocaleString(),
+                    log.ip_address,
+                    log.status
+                ]);
+            });
+
+            // Crear libro de trabajo y hoja
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Registros");
+
+            // Generar el archivo y descargarlo
+            XLSX.writeFile(wb, `registros_acceso_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+        // Cargar logs al iniciar
+        loadLogs();
+    </script>
+</body>
+</html>

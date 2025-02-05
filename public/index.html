@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>Sistema de Control de Inventario</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+        }
+
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .login-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .inventory-container {
+            display: none;
+            padding: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .tab {
+            padding: 0.5rem 1rem;
+            background: #e5e7eb;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .logout-btn {
+            padding: 0.5rem 1rem;
+            background-color: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f3f4f6;
+        }
+
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+        }
+
+        .badge-blue { 
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .badge-gray {
+            background-color: #6b7280;
+            color: white;
+        }
+
+        .action-btn {
+            padding: 0.25rem 0.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 0.25rem;
+        }
+
+        .edit-btn {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        .delete-btn {
+            background-color: #dc2626;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container" id="loginContainer">
+        <div class="login-card">
+            <h2 style="text-align: center; margin-bottom: 1.5rem;">Acceso al Sistema</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Usuario</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="login-btn">Ingresar al Sistema</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="inventory-container" id="inventoryContainer">
+        <div class="header">
+            <h1>Sistema de Control de Inventario</h1>
+            <button class="logout-btn" id="logoutBtn">Cerrar Sesión</button>
+        </div>
+
+        <div class="tabs" id="tabs">
+            <button class="tab active" data-tab="entradas">Registro de Entradas</button>
+            <button class="tab" data-tab="asignaciones">Asignaciones</button>
+            <button class="tab" data-tab="mermas">Control de Mermas</button>
+        </div>
+
+        <div class="tab-content" id="tabContent">
+            <!-- El contenido de las tablas se insertará aquí -->
+        </div>
+    </div>
+
+
+    <!-- Agregar este HTML justo antes del cierre del body -->
+<div id="editModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="background: white; margin: 10% auto; padding: 20px; width: 90%; max-width: 500px; border-radius: 8px;">
+        <h2 id="modalTitle">Editar Registro</h2>
+        <form id="editForm">
+            <input type="hidden" id="editId">
+            <div class="form-group" id="editFields">
+                <!-- Los campos se generarán dinámicamente -->
+            </div>
+            <div style="text-align: right; margin-top: 1rem;">
+                <button type="button" onclick="closeModal()" style="margin-right: 10px;">Cancelar</button>
+                <button type="submit" class="login-btn" style="width: auto;">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+    <script>
+
+
+
+            // 1. Variables globales
+    let currentTab = 'entradas';
+    const data = {
+        entradas: [
+            { id: 1, producto: 'Material A', cantidad: 100, fecha: '2024-02-04', estado: 'Recibido' },
+            { id: 2, producto: 'Material B', cantidad: 50, fecha: '2024-02-04', estado: 'Pendiente' },
+            { id: 3, producto: 'Material C', cantidad: 75, fecha: '2024-02-03', estado: 'Recibido' }
+        ],
+        asignaciones: [
+            { id: 1, trabajador: 'Juan Pérez', producto: 'Material A', cantidad: 20, fecha: '2024-02-04' },
+            { id: 2, trabajador: 'María García', producto: 'Material B', cantidad: 15, fecha: '2024-02-04' }
+        ],
+        mermas: [
+            { id: 1, producto: 'Material A', cantidad: 5, causa: 'Daño en transporte', fecha: '2024-02-03' },
+            { id: 2, producto: 'Material C', cantidad: 3, causa: 'Caducidad', fecha: '2024-02-02' }
+        ]
+    };
+
+    // 2. Función de login más simple
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        
+        console.log('Intento de login:', username, password); // Para depuración
+
+        if (username === 'admin' && password === 'admin123') {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('inventoryContainer').style.display = 'block';
+            loadTabContent('entradas');
+        } else {
+            alert('Usuario o contraseña incorrectos');
+        }
+    });
+                    
+
+
+
+
+
+
+// Agregar esto justo después de la definición de data
+console.log('Data inicial:', data);
+
+// Modificar el event listener del login para incluir más logs
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    
+    console.log('Intento de login:', { username, password });
+    
+    if (username === 'admin' && password === 'admin123') {
+        console.log('Credenciales correctas');
+        document.getElementById('loginContainer').style.display = 'none';
+        document.getElementById('inventoryContainer').style.display = 'block';
+        loadTabContent('entradas');
+    } else {
+        console.log('Credenciales incorrectas');
+        alert('Usuario o contraseña incorrectos');
+    }
+});
+
+
+
+        // Función para el logout
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('inventoryContainer').style.display = 'none';
+            document.getElementById('loginForm').reset();
+        });
+
+        // Función para cargar contenido de las pestañas
+        function loadTabContent(tabName) {
+            const tabContent = document.getElementById('tabContent');
+            let columns;
+            
+            switch(tabName) {
+                case 'entradas':
+                    columns = [
+                        { key: 'id', header: 'ID' },
+                        { key: 'producto', header: 'Producto' },
+                        { key: 'cantidad', header: 'Cantidad' },
+                        { key: 'fecha', header: 'Fecha' },
+                        { key: 'estado', header: 'Estado' }
+                    ];
+                    break;
+                case 'asignaciones':
+                    columns = [
+                        { key: 'id', header: 'ID' },
+                        { key: 'trabajador', header: 'Trabajador' },
+                        { key: 'producto', header: 'Producto' },
+                        { key: 'cantidad', header: 'Cantidad' },
+                        { key: 'fecha', header: 'Fecha' }
+                    ];
+                    break;
+                case 'mermas':
+                    columns = [
+                        { key: 'id', header: 'ID' },
+                        { key: 'producto', header: 'Producto' },
+                        { key: 'cantidad', header: 'Cantidad' },
+                        { key: 'causa', header: 'Causa' },
+                        { key: 'fecha', header: 'Fecha' }
+                    ];
+                    break;
+            }
+
+            const table = createTable(data[tabName], columns);
+            tabContent.innerHTML = '';
+            tabContent.appendChild(table);
+        }
+
+
+
+
+
+
+// 3. Función createTable
+function createTable(data, columns) {
+        const container = document.createElement('div');
+        
+        const buttons = `
+            <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+                <button class="action-btn" 
+                        style="background-color: #059669; color: white; padding: 8px 16px;"
+                        onclick="addItem('${currentTab}')">
+                    + Agregar Nuevo
+                </button>
+                <button class="action-btn" 
+                        style="background-color: #2563eb; color: white; padding: 8px 16px;"
+                        onclick="exportToExcel('${currentTab}')">
+                    📥 Exportar a Excel
+                </button>
+            </div>
+        `;
+
+        let tableHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        ${columns.map(col => `<th>${col.header}</th>`).join('')}
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        if (data && data.length > 0) {
+            data.forEach(item => {
+                tableHTML += '<tr>';
+                columns.forEach(col => {
+                    if (col.key === 'estado') {
+                        const badgeClass = item[col.key] === 'Recibido' ? 'badge-blue' : 'badge-gray';
+                        tableHTML += `<td><span class="badge ${badgeClass}">${item[col.key]}</span></td>`;
+                    } else {
+                        tableHTML += `<td>${item[col.key]}</td>`;
+                    }
+                });
+                tableHTML += `
+                    <td>
+                        <button class="action-btn edit-btn" onclick="editItem(${item.id}, '${currentTab}')">Editar</button>
+                        <button class="action-btn delete-btn" onclick="deleteItem(${item.id}, '${currentTab}')">Eliminar</button>
+                    </td>
+                </tr>`;
+            });
+        } else {
+            tableHTML += `
+                <tr>
+                    <td colspan="${columns.length + 1}" style="text-align: center;">
+                        No hay registros disponibles
+                    </td>
+                </tr>`;
+        }
+
+        tableHTML += '</tbody></table>';
+        container.innerHTML = buttons + tableHTML;
+        return container;
+    }
+
+        
+
+
+
+
+
+
+
+
+
+
+
+function exportToExcel(tabName) {
+    // Obtener los datos y columnas según el tipo de registro
+    const dataToExport = data[tabName];
+    let columns;
+    let fileName;
+
+    switch(tabName) {
+        case 'entradas':
+            columns = [
+                { key: 'id', header: 'ID' },
+                { key: 'producto', header: 'Producto' },
+                { key: 'cantidad', header: 'Cantidad' },
+                { key: 'fecha', header: 'Fecha' },
+                { key: 'estado', header: 'Estado' }
+            ];
+            fileName = 'registro_entradas';
+            break;
+        case 'asignaciones':
+            columns = [
+                { key: 'id', header: 'ID' },
+                { key: 'trabajador', header: 'Trabajador' },
+                { key: 'producto', header: 'Producto' },
+                { key: 'cantidad', header: 'Cantidad' },
+                { key: 'fecha', header: 'Fecha' }
+            ];
+            fileName = 'registro_asignaciones';
+            break;
+        case 'mermas':
+            columns = [
+                { key: 'id', header: 'ID' },
+                { key: 'producto', header: 'Producto' },
+                { key: 'cantidad', header: 'Cantidad' },
+                { key: 'causa', header: 'Causa' },
+                { key: 'fecha', header: 'Fecha' }
+            ];
+            fileName = 'registro_mermas';
+            break;
+    }
+
+    // Crear matriz de datos para Excel
+    const excelData = [
+        // Encabezados
+        columns.map(col => col.header),
+        // Datos
+        ...dataToExport.map(item => 
+            columns.map(col => item[col.key])
+        )
+    ];
+
+    // Crear libro de trabajo
+    const ws = XLSX.utils.aoa_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Registros');
+
+    // Ajustar anchos de columna
+    const colWidths = columns.map(() => ({ wch: 15 }));
+    ws['!cols'] = colWidths;
+
+    // Estilo para encabezados
+    const headerRange = XLSX.utils.decode_range(ws['!ref']);
+    for (let C = headerRange.s.c; C <= headerRange.e.c; ++C) {
+        const address = XLSX.utils.encode_cell({ r: 0, c: C });
+        const cell = ws[address];
+        cell.s = {
+            font: { bold: true },
+            fill: { fgColor: { rgb: "CCCCCC" } }
+        };
+    }
+
+    // Generar el archivo
+    const date = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `${fileName}_${date}.xlsx`);
+}
+
+
+
+
+
+function showMessage(message, type = 'success') {
+    const msgDiv = document.createElement('div');
+    msgDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        border-radius: 4px;
+        color: white;
+        background-color: ${type === 'success' ? '#059669' : '#dc2626'};
+        z-index: 1000;
+    `;
+    msgDiv.textContent = message;
+    document.body.appendChild(msgDiv);
+    
+    setTimeout(() => {
+        msgDiv.remove();
+    }, 3000);
+}
+
+// Modificar la función exportToExcel para mostrar el mensaje
+function exportToExcel(tabName) {
+    // ... código anterior ...
+    
+    XLSX.writeFile(wb, `${fileName}_${date}.xlsx`);
+    showMessage(`${tabName} exportados exitosamente a Excel`);
+}
+
+
+
+
+
+
+
+
+
+
+
+function addItem(tabName) {
+    const fields = document.getElementById('editFields');
+    fields.innerHTML = '';
+    
+    // Limpiar el formulario
+    document.getElementById('editId').value = '';
+    
+    // Crear campos según el tipo de registro
+    switch(tabName) {
+        case 'entradas':
+            fields.innerHTML = `
+                <div class="form-group">
+                    <label for="edit_producto">Producto</label>
+                    <input type="text" id="edit_producto" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_cantidad">Cantidad</label>
+                    <input type="number" id="edit_cantidad" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_estado">Estado</label>
+                    <select id="edit_estado" required>
+                        <option value="Recibido">Recibido</option>
+                        <option value="Pendiente">Pendiente</option>
+                    </select>
+                </div>
+            `;
+            break;
+        case 'asignaciones':
+            fields.innerHTML = `
+                <div class="form-group">
+                    <label for="edit_trabajador">Trabajador</label>
+                    <input type="text" id="edit_trabajador" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_producto">Producto</label>
+                    <input type="text" id="edit_producto" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_cantidad">Cantidad</label>
+                    <input type="number" id="edit_cantidad" required>
+                </div>
+            `;
+            break;
+        case 'mermas':
+            fields.innerHTML = `
+                <div class="form-group">
+                    <label for="edit_producto">Producto</label>
+                    <input type="text" id="edit_producto" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_cantidad">Cantidad</label>
+                    <input type="number" id="edit_cantidad" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_causa">Causa</label>
+                    <input type="text" id="edit_causa" required>
+                </div>
+            `;
+            break;
+    }
+
+    // Cambiar el título del modal
+    document.getElementById('modalTitle').textContent = `Nuevo ${tabName.slice(0, -1)}`;
+    document.getElementById('editModal').style.display = 'block';
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+document.getElementById('editForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const id = document.getElementById('editId').value;
+    const tabName = getCurrentTab();
+    
+    // Objeto para almacenar los datos del formulario
+    const formData = {};
+    const inputs = document.querySelectorAll('#editFields input, #editFields select');
+    inputs.forEach(input => {
+        formData[input.id.replace('edit_', '')] = input.value;
+    });
+
+    if (id) {
+        // Modo edición
+        const item = data[tabName].find(item => item.id === parseInt(id));
+        if (item) {
+            Object.assign(item, formData);
+        }
+    } else {
+        // Modo nuevo registro
+        const newId = data[tabName].length > 0 ? 
+            Math.max(...data[tabName].map(item => item.id)) + 1 : 1;
+            
+        const newItem = {
+            id: newId,
+            ...formData,
+            fecha: new Date().toISOString().split('T')[0]
+        };
+        
+        // Agregar el nuevo item al array correspondiente
+        data[tabName].push(newItem);
+        
+        // Log para depuración
+        console.log('Nuevo item agregado:', newItem);
+        console.log('Data actual:', data[tabName]);
+    }
+
+    // Cerrar modal y actualizar tabla
+    closeModal();
+    loadTabContent(tabName);
+
+    // Mostrar mensaje de éxito
+    showMessage(`Registro ${id ? 'actualizado' : 'agregado'} exitosamente`);
+});
+
+// Función para mostrar mensajes
+function showMessage(message, type = 'success') {
+    const msgDiv = document.createElement('div');
+    msgDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        border-radius: 4px;
+        color: white;
+        background-color: ${type === 'success' ? '#059669' : '#dc2626'};
+        z-index: 1000;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    `;
+    msgDiv.textContent = message;
+    document.body.appendChild(msgDiv);
+    
+    setTimeout(() => {
+        msgDiv.remove();
+    }, 3000);
+}
+
+// Modificar la función loadTabContent para asegurar que siempre muestre los datos
+function loadTabContent(tabName) {
+    const tabContent = document.getElementById('tabContent');
+    let columns;
+    
+    switch(tabName) {
+        case 'entradas':
+            columns = [
+                { key: 'id', header: 'ID' },
+                { key: 'producto', header: 'Producto' },
+                { key: 'cantidad', header: 'Cantidad' },
+                { key: 'fecha', header: 'Fecha' },
+                { key: 'estado', header: 'Estado' }
+            ];
+            break;
+        case 'asignaciones':
+            columns = [
+                { key: 'id', header: 'ID' },
+                { key: 'trabajador', header: 'Trabajador' },
+                { key: 'producto', header: 'Producto' },
+                { key: 'cantidad', header: 'Cantidad' },
+                { key: 'fecha', header: 'Fecha' }
+            ];
+            break;
+        case 'mermas':
+            columns = [
+                { key: 'id', header: 'ID' },
+                { key: 'producto', header: 'Producto' },
+                { key: 'cantidad', header: 'Cantidad' },
+                { key: 'causa', header: 'Causa' },
+                { key: 'fecha', header: 'Fecha' }
+            ];
+            break;
+    }
+
+    // Asegurarse de que el array exista
+    if (!data[tabName]) {
+        data[tabName] = [];
+    }
+
+    const table = createTable(data[tabName], columns);
+    tabContent.innerHTML = '';
+    tabContent.appendChild(table);
+
+    // Log para depuración
+    console.log('Datos actuales en tabla:', data[tabName]);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Función para obtener la pestaña actual
+function getCurrentTab() {
+    return currentTab;
+}
+
+// Función para abrir el modal de edición
+function editItem(id, tabName) {
+    const item = data[tabName].find(item => item.id === id);
+    if (!item) return;
+
+    const fields = document.getElementById('editFields');
+    fields.innerHTML = '';
+    
+    Object.keys(item).forEach(key => {
+        if (key !== 'id' && key !== 'fecha') {
+            const div = document.createElement('div');
+            div.className = 'form-group';
+            
+            if (key === 'estado') {
+                div.innerHTML = `
+                    <label for="edit_${key}">${key.charAt(0).toUpperCase() + key.slice(1)}</label>
+                    <select id="edit_${key}" class="form-control">
+                        <option value="Recibido" ${item[key] === 'Recibido' ? 'selected' : ''}>Recibido</option>
+                        <option value="Pendiente" ${item[key] === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+                    </select>
+                `;
+            } else {
+                div.innerHTML = `
+                    <label for="edit_${key}">${key.charAt(0).toUpperCase() + key.slice(1)}</label>
+                    <input type="${key === 'cantidad' ? 'number' : 'text'}" 
+                           id="edit_${key}" 
+                           value="${item[key]}" 
+                           class="form-control">
+                `;
+            }
+            fields.appendChild(div);
+        }
+    });
+
+    document.getElementById('editId').value = id;
+    document.getElementById('editModal').style.display = 'block';
+}
+
+// Función para cerrar el modal
+function closeModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+// Función para eliminar un item
+function deleteItem(id, tabName) {
+    if (confirm('¿Estás seguro de que deseas eliminar este registro?')) {
+        data[tabName] = data[tabName].filter(item => item.id !== id);
+        loadTabContent(tabName);
+    }
+}
+
+// Event listener para el formulario de edición
+document.getElementById('editForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const id = parseInt(document.getElementById('editId').value);
+    const tabName = getCurrentTab();
+    const item = data[tabName].find(item => item.id === id);
+    
+    if (item) {
+        // Actualizar cada campo del item
+        Object.keys(item).forEach(key => {
+            if (key !== 'id' && key !== 'fecha') {
+                const input = document.getElementById(`edit_${key}`);
+                if (input) {
+                    item[key] = input.value;
+                }
+            }
+        });
+        
+        closeModal();
+        loadTabContent(tabName);
+    }
+});
+
+// Actualizar el event listener de las pestañas para mantener el tracking
+document.getElementById('tabs').addEventListener('click', function(e) {
+    if (e.target.classList.contains('tab')) {
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        e.target.classList.add('active');
+        currentTab = e.target.dataset.tab;
+        loadTabContent(currentTab);
+    }
+});
+
+
+
+
+
+
+
+
+        // Event listener para las pestañas
+        document.getElementById('tabs').addEventListener('click', function(e) {
+            if (e.target.classList.contains('tab')) {
+                document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+                e.target.classList.add('active');
+                loadTabContent(e.target.dataset.tab);
+            }
+        });
+    </script>
+
+
+
+
+</body>
+</html>
