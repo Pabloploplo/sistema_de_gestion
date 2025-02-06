@@ -17,10 +17,6 @@
             background-color: #f5f5f5;
         }
 
-
-
-
-
         .login-image {
             text-align: center;
             margin-bottom: 20px;
@@ -31,11 +27,6 @@
             height: auto;
             margin: 0 auto;
         }
-
-
-
-
-
 
         .login-container {
             display: flex;
@@ -235,276 +226,189 @@
 
     <script>
 
+// 1. Variables globales
+let currentTab = 'entradas';
+const data = {
+    entradas: [
+        { id: 1, producto: 'Material A', cantidad: 100, fecha: '2024-02-04', estado: 'Recibido' },
+        { id: 2, producto: 'Material B', cantidad: 50, fecha: '2024-02-04', estado: 'Pendiente' },
+        { id: 3, producto: 'Material C', cantidad: 75, fecha: '2024-02-03', estado: 'Recibido' }
+    ],
+    asignaciones: [
+        { id: 1, trabajador: 'Juan Pérez', producto: 'Material A', cantidad: 20, fecha: '2024-02-04' },
+        { id: 2, trabajador: 'María García', producto: 'Material B', cantidad: 15, fecha: '2024-02-04' }
+    ],
+    mermas: [
+        { id: 1, producto: 'Material A', cantidad: 5, causa: 'Daño en transporte', fecha: '2024-02-03' },
+        { id: 2, producto: 'Material C', cantidad: 3, causa: 'Caducidad', fecha: '2024-02-02' }
+    ]
+};
 
-
-            // 1. Variables globales
-    let currentTab = 'entradas';
-    const data = {
-        entradas: [
-            { id: 1, producto: 'Material A', cantidad: 100, fecha: '2024-02-04', estado: 'Recibido' },
-            { id: 2, producto: 'Material B', cantidad: 50, fecha: '2024-02-04', estado: 'Pendiente' },
-            { id: 3, producto: 'Material C', cantidad: 75, fecha: '2024-02-03', estado: 'Recibido' }
-        ],
-        asignaciones: [
-            { id: 1, trabajador: 'Juan Pérez', producto: 'Material A', cantidad: 20, fecha: '2024-02-04' },
-            { id: 2, trabajador: 'María García', producto: 'Material B', cantidad: 15, fecha: '2024-02-04' }
-        ],
-        mermas: [
-            { id: 1, producto: 'Material A', cantidad: 5, causa: 'Daño en transporte', fecha: '2024-02-03' },
-            { id: 2, producto: 'Material C', cantidad: 3, causa: 'Caducidad', fecha: '2024-02-02' }
-        ]
-    };
-
-    // 2. Función de login más simple
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        
-        console.log('Intento de login:', username, password); // Para depuración
-
-        if (username === 'admin' && password === 'admin123') {
-            document.getElementById('loginContainer').style.display = 'none';
-            document.getElementById('inventoryContainer').style.display = 'block';
-            loadTabContent('entradas');
-        } else {
-            alert('Usuario o contraseña incorrectos');
-        }
-    });
-                    
-
-
-
-
-
-
-// Agregar esto justo después de la definición de data
-console.log('Data inicial:', data);
-
-// Modificar el event listener del login para incluir más logs
+// 2. Event Listeners principales
 document.getElementById('loginForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     
-    console.log('Intento de login:', { username, password });
-    
     if (username === 'admin' && password === 'admin123') {
-        console.log('Credenciales correctas');
         document.getElementById('loginContainer').style.display = 'none';
         document.getElementById('inventoryContainer').style.display = 'block';
         loadTabContent('entradas');
     } else {
-        console.log('Credenciales incorrectas');
         alert('Usuario o contraseña incorrectos');
     }
 });
 
+document.getElementById('logoutBtn').addEventListener('click', function() {
+    document.getElementById('loginContainer').style.display = 'flex';
+    document.getElementById('inventoryContainer').style.display = 'none';
+    document.getElementById('loginForm').reset();
+});
 
-
-        // Función para el logout
-        document.getElementById('logoutBtn').addEventListener('click', function() {
-            document.getElementById('loginContainer').style.display = 'flex';
-            document.getElementById('inventoryContainer').style.display = 'none';
-            document.getElementById('loginForm').reset();
-        });
-
-        // Función para cargar contenido de las pestañas
-        function loadTabContent(tabName) {
-            const tabContent = document.getElementById('tabContent');
-            let columns;
-            
-            switch(tabName) {
-                case 'entradas':
-                    columns = [
-                        { key: 'id', header: 'ID' },
-                        { key: 'producto', header: 'Producto' },
-                        { key: 'cantidad', header: 'Cantidad' },
-                        { key: 'fecha', header: 'Fecha' },
-                        { key: 'estado', header: 'Estado' }
-                    ];
-                    break;
-                case 'asignaciones':
-                    columns = [
-                        { key: 'id', header: 'ID' },
-                        { key: 'trabajador', header: 'Trabajador' },
-                        { key: 'producto', header: 'Producto' },
-                        { key: 'cantidad', header: 'Cantidad' },
-                        { key: 'fecha', header: 'Fecha' }
-                    ];
-                    break;
-                case 'mermas':
-                    columns = [
-                        { key: 'id', header: 'ID' },
-                        { key: 'producto', header: 'Producto' },
-                        { key: 'cantidad', header: 'Cantidad' },
-                        { key: 'causa', header: 'Causa' },
-                        { key: 'fecha', header: 'Fecha' }
-                    ];
-                    break;
-            }
-
-            const table = createTable(data[tabName], columns);
-            tabContent.innerHTML = '';
-            tabContent.appendChild(table);
-        }
-
-
-
-
-
-
-// 3. Función createTable
-function createTable(data, columns) {
-        const container = document.createElement('div');
-        
-        const buttons = `
-            <div style="margin-bottom: 20px; display: flex; gap: 10px;">
-                <button class="action-btn" 
-                        style="background-color: #059669; color: white; padding: 8px 16px;"
-                        onclick="addItem('${currentTab}')">
-                    + Agregar Nuevo
-                </button>
-                <button class="action-btn" 
-                        style="background-color: #2563eb; color: white; padding: 8px 16px;"
-                        onclick="exportToExcel('${currentTab}')">
-                    📥 Exportar a Excel
-                </button>
-            </div>
-        `;
-
-        let tableHTML = `
-            <table>
-                <thead>
-                    <tr>
-                        ${columns.map(col => `<th>${col.header}</th>`).join('')}
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        if (data && data.length > 0) {
-            data.forEach(item => {
-                tableHTML += '<tr>';
-                columns.forEach(col => {
-                    if (col.key === 'estado') {
-                        const badgeClass = item[col.key] === 'Recibido' ? 'badge-blue' : 'badge-gray';
-                        tableHTML += `<td><span class="badge ${badgeClass}">${item[col.key]}</span></td>`;
-                    } else {
-                        tableHTML += `<td>${item[col.key]}</td>`;
-                    }
-                });
-                tableHTML += `
-                    <td>
-                        <button class="action-btn edit-btn" onclick="editItem(${item.id}, '${currentTab}')">Editar</button>
-                        <button class="action-btn delete-btn" onclick="deleteItem(${item.id}, '${currentTab}')">Eliminar</button>
-                    </td>
-                </tr>`;
-            });
-        } else {
-            tableHTML += `
-                <tr>
-                    <td colspan="${columns.length + 1}" style="text-align: center;">
-                        No hay registros disponibles
-                    </td>
-                </tr>`;
-        }
-
-        tableHTML += '</tbody></table>';
-        container.innerHTML = buttons + tableHTML;
-        return container;
+document.getElementById('tabs').addEventListener('click', function(e) {
+    if (e.target.classList.contains('tab')) {
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        e.target.classList.add('active');
+        currentTab = e.target.dataset.tab;
+        loadTabContent(currentTab);
     }
+});
 
-        
-
-
-
-
-
-
-
-
-
-
-
-function exportToExcel(tabName) {
-    // Obtener los datos y columnas según el tipo de registro
-    const dataToExport = data[tabName];
-    let columns;
-    let fileName;
-
+// 3. Funciones principales
+function getColumns(tabName) {
     switch(tabName) {
         case 'entradas':
-            columns = [
+            return [
                 { key: 'id', header: 'ID' },
                 { key: 'producto', header: 'Producto' },
                 { key: 'cantidad', header: 'Cantidad' },
                 { key: 'fecha', header: 'Fecha' },
                 { key: 'estado', header: 'Estado' }
             ];
-            fileName = 'registro_entradas';
-            break;
         case 'asignaciones':
-            columns = [
+            return [
                 { key: 'id', header: 'ID' },
                 { key: 'trabajador', header: 'Trabajador' },
                 { key: 'producto', header: 'Producto' },
                 { key: 'cantidad', header: 'Cantidad' },
                 { key: 'fecha', header: 'Fecha' }
             ];
-            fileName = 'registro_asignaciones';
-            break;
         case 'mermas':
-            columns = [
+            return [
                 { key: 'id', header: 'ID' },
                 { key: 'producto', header: 'Producto' },
                 { key: 'cantidad', header: 'Cantidad' },
                 { key: 'causa', header: 'Causa' },
                 { key: 'fecha', header: 'Fecha' }
             ];
-            fileName = 'registro_mermas';
-            break;
     }
-
-    // Crear matriz de datos para Excel
-    const excelData = [
-        // Encabezados
-        columns.map(col => col.header),
-        // Datos
-        ...dataToExport.map(item => 
-            columns.map(col => item[col.key])
-        )
-    ];
-
-    // Crear libro de trabajo
-    const ws = XLSX.utils.aoa_to_sheet(excelData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Registros');
-
-    // Ajustar anchos de columna
-    const colWidths = columns.map(() => ({ wch: 15 }));
-    ws['!cols'] = colWidths;
-
-    // Estilo para encabezados
-    const headerRange = XLSX.utils.decode_range(ws['!ref']);
-    for (let C = headerRange.s.c; C <= headerRange.e.c; ++C) {
-        const address = XLSX.utils.encode_cell({ r: 0, c: C });
-        const cell = ws[address];
-        cell.s = {
-            font: { bold: true },
-            fill: { fgColor: { rgb: "CCCCCC" } }
-        };
-    }
-
-    // Generar el archivo
-    const date = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(wb, `${fileName}_${date}.xlsx`);
 }
 
+function createTable(data, columns) {
+    const container = document.createElement('div');
+    
+    const buttons = `
+        <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+            <button class="action-btn" 
+                    style="background-color: #059669; color: white; padding: 8px 16px;"
+                    onclick="addItem('${currentTab}')">
+                + Agregar Nuevo
+            </button>
+            <button class="action-btn" 
+                    style="background-color: #2563eb; color: white; padding: 8px 16px;"
+                    onclick="exportToExcel('${currentTab}')">
+                📥 Exportar a Excel
+            </button>
+        </div>
+    `;
 
+    let tableHTML = `
+        <table>
+            <thead>
+                <tr>
+                    ${columns.map(col => `<th>${col.header}</th>`).join('')}
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
 
+    if (data && data.length > 0) {
+        data.forEach(item => {
+            tableHTML += '<tr>';
+            columns.forEach(col => {
+                if (col.key === 'estado') {
+                    const badgeClass = item[col.key] === 'Recibido' ? 'badge-blue' : 'badge-gray';
+                    tableHTML += `<td><span class="badge ${badgeClass}">${item[col.key]}</span></td>`;
+                } else {
+                    tableHTML += `<td>${item[col.key]}</td>`;
+                }
+            });
+            tableHTML += `
+                <td>
+                    <button class="action-btn edit-btn" onclick="editItem(${item.id}, '${currentTab}')">Editar</button>
+                    <button class="action-btn delete-btn" onclick="deleteItem(${item.id}, '${currentTab}')">Eliminar</button>
+                </td>
+            </tr>`;
+        });
+    } else {
+        tableHTML += `
+            <tr>
+                <td colspan="${columns.length + 1}" style="text-align: center;">
+                    No hay registros disponibles
+                </td>
+            </tr>`;
+    }
 
+    tableHTML += '</tbody></table>';
+    container.innerHTML = buttons + tableHTML;
+    return container;
+}
+
+function loadTabContent(tabName) {
+    const tabContent = document.getElementById('tabContent');
+    const columns = getColumns(tabName);
+    
+    if (!data[tabName]) {
+        data[tabName] = [];
+    }
+
+    const table = createTable(data[tabName], columns);
+    tabContent.innerHTML = '';
+    tabContent.appendChild(table);
+}
+
+function exportToExcel(tabName) {
+    try {
+        const dataToExport = data[tabName];
+        const columns = getColumns(tabName);
+        
+        const excelData = [
+            columns.map(col => col.header)
+        ];
+
+        dataToExport.forEach(item => {
+            const row = columns.map(col => item[col.key]);
+            excelData.push(row);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(excelData);
+        const wb = XLSX.utils.book_new();
+        
+        const colWidths = columns.map(() => ({ wch: 15 }));
+        ws['!cols'] = colWidths;
+
+        XLSX.utils.book_append_sheet(wb, ws, tabName);
+
+        const fileName = `${tabName}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        
+        showMessage(`${tabName} exportados exitosamente a Excel`);
+    } catch (error) {
+        console.error('Error al exportar:', error);
+        showMessage('Error al exportar a Excel', 'error');
+    }
+}
 
 function showMessage(message, type = 'success') {
     const msgDiv = document.createElement('div');
@@ -517,6 +421,7 @@ function showMessage(message, type = 'success') {
         color: white;
         background-color: ${type === 'success' ? '#059669' : '#dc2626'};
         z-index: 1000;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     `;
     msgDiv.textContent = message;
     document.body.appendChild(msgDiv);
@@ -526,32 +431,16 @@ function showMessage(message, type = 'success') {
     }, 3000);
 }
 
-// Modificar la función exportToExcel para mostrar el mensaje
-function exportToExcel(tabName) {
-    // ... código anterior ...
-    
-    XLSX.writeFile(wb, `${fileName}_${date}.xlsx`);
-    showMessage(`${tabName} exportados exitosamente a Excel`);
+function getCurrentTab() {
+    return currentTab;
 }
 
-
-
-
-
-
-
-
-
-
-
+// Funciones de edición
 function addItem(tabName) {
     const fields = document.getElementById('editFields');
     fields.innerHTML = '';
-    
-    // Limpiar el formulario
     document.getElementById('editId').value = '';
     
-    // Crear campos según el tipo de registro
     switch(tabName) {
         case 'entradas':
             fields.innerHTML = `
@@ -606,158 +495,10 @@ function addItem(tabName) {
             break;
     }
 
-    // Cambiar el título del modal
     document.getElementById('modalTitle').textContent = `Nuevo ${tabName.slice(0, -1)}`;
     document.getElementById('editModal').style.display = 'block';
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-document.getElementById('editForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const id = document.getElementById('editId').value;
-    const tabName = getCurrentTab();
-    
-    // Objeto para almacenar los datos del formulario
-    const formData = {};
-    const inputs = document.querySelectorAll('#editFields input, #editFields select');
-    inputs.forEach(input => {
-        formData[input.id.replace('edit_', '')] = input.value;
-    });
-
-    if (id) {
-        // Modo edición
-        const item = data[tabName].find(item => item.id === parseInt(id));
-        if (item) {
-            Object.assign(item, formData);
-        }
-    } else {
-        // Modo nuevo registro
-        const newId = data[tabName].length > 0 ? 
-            Math.max(...data[tabName].map(item => item.id)) + 1 : 1;
-            
-        const newItem = {
-            id: newId,
-            ...formData,
-            fecha: new Date().toISOString().split('T')[0]
-        };
-        
-        // Agregar el nuevo item al array correspondiente
-        data[tabName].push(newItem);
-        
-        // Log para depuración
-        console.log('Nuevo item agregado:', newItem);
-        console.log('Data actual:', data[tabName]);
-    }
-
-    // Cerrar modal y actualizar tabla
-    closeModal();
-    loadTabContent(tabName);
-
-    // Mostrar mensaje de éxito
-    showMessage(`Registro ${id ? 'actualizado' : 'agregado'} exitosamente`);
-});
-
-// Función para mostrar mensajes
-function showMessage(message, type = 'success') {
-    const msgDiv = document.createElement('div');
-    msgDiv.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 10px 20px;
-        border-radius: 4px;
-        color: white;
-        background-color: ${type === 'success' ? '#059669' : '#dc2626'};
-        z-index: 1000;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    `;
-    msgDiv.textContent = message;
-    document.body.appendChild(msgDiv);
-    
-    setTimeout(() => {
-        msgDiv.remove();
-    }, 3000);
-}
-
-// Modificar la función loadTabContent para asegurar que siempre muestre los datos
-function loadTabContent(tabName) {
-    const tabContent = document.getElementById('tabContent');
-    let columns;
-    
-    switch(tabName) {
-        case 'entradas':
-            columns = [
-                { key: 'id', header: 'ID' },
-                { key: 'producto', header: 'Producto' },
-                { key: 'cantidad', header: 'Cantidad' },
-                { key: 'fecha', header: 'Fecha' },
-                { key: 'estado', header: 'Estado' }
-            ];
-            break;
-        case 'asignaciones':
-            columns = [
-                { key: 'id', header: 'ID' },
-                { key: 'trabajador', header: 'Trabajador' },
-                { key: 'producto', header: 'Producto' },
-                { key: 'cantidad', header: 'Cantidad' },
-                { key: 'fecha', header: 'Fecha' }
-            ];
-            break;
-        case 'mermas':
-            columns = [
-                { key: 'id', header: 'ID' },
-                { key: 'producto', header: 'Producto' },
-                { key: 'cantidad', header: 'Cantidad' },
-                { key: 'causa', header: 'Causa' },
-                { key: 'fecha', header: 'Fecha' }
-            ];
-            break;
-    }
-
-    // Asegurarse de que el array exista
-    if (!data[tabName]) {
-        data[tabName] = [];
-    }
-
-    const table = createTable(data[tabName], columns);
-    tabContent.innerHTML = '';
-    tabContent.appendChild(table);
-
-    // Log para depuración
-    console.log('Datos actuales en tabla:', data[tabName]);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Función para obtener la pestaña actual
-function getCurrentTab() {
-    return currentTab;
-}
-
-// Función para abrir el modal de edición
 function editItem(id, tabName) {
     const item = data[tabName].find(item => item.id === id);
     if (!item) return;
@@ -795,12 +536,10 @@ function editItem(id, tabName) {
     document.getElementById('editModal').style.display = 'block';
 }
 
-// Función para cerrar el modal
 function closeModal() {
     document.getElementById('editModal').style.display = 'none';
 }
 
-// Función para eliminar un item
 function deleteItem(id, tabName) {
     if (confirm('¿Estás seguro de que deseas eliminar este registro?')) {
         data[tabName] = data[tabName].filter(item => item.id !== id);
@@ -811,51 +550,39 @@ function deleteItem(id, tabName) {
 // Event listener para el formulario de edición
 document.getElementById('editForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    const id = parseInt(document.getElementById('editId').value);
+    const id = document.getElementById('editId').value;
     const tabName = getCurrentTab();
-    const item = data[tabName].find(item => item.id === id);
     
-    if (item) {
-        // Actualizar cada campo del item
-        Object.keys(item).forEach(key => {
-            if (key !== 'id' && key !== 'fecha') {
-                const input = document.getElementById(`edit_${key}`);
-                if (input) {
-                    item[key] = input.value;
-                }
-            }
-        });
+    const formData = {};
+    const inputs = document.querySelectorAll('#editFields input, #editFields select');
+    inputs.forEach(input => {
+        formData[input.id.replace('edit_', '')] = input.value;
+    });
+
+    if (id) {
+        const item = data[tabName].find(item => item.id === parseInt(id));
+        if (item) {
+            Object.assign(item, formData);
+        }
+    } else {
+        const newId = data[tabName].length > 0 ? 
+            Math.max(...data[tabName].map(item => item.id)) + 1 : 1;
+            
+        const newItem = {
+            id: newId,
+            ...formData,
+            fecha: new Date().toISOString().split('T')[0]
+        };
         
-        closeModal();
-        loadTabContent(tabName);
+        data[tabName].push(newItem);
     }
+
+    closeModal();
+    loadTabContent(tabName);
+    showMessage(`Registro ${id ? 'actualizado' : 'agregado'} exitosamente`);
 });
 
-// Actualizar el event listener de las pestañas para mantener el tracking
-document.getElementById('tabs').addEventListener('click', function(e) {
-    if (e.target.classList.contains('tab')) {
-        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-        e.target.classList.add('active');
-        currentTab = e.target.dataset.tab;
-        loadTabContent(currentTab);
-    }
-});
-
-
-
-
-
-
-
-
-        // Event listener para las pestañas
-        document.getElementById('tabs').addEventListener('click', function(e) {
-            if (e.target.classList.contains('tab')) {
-                document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-                e.target.classList.add('active');
-                loadTabContent(e.target.dataset.tab);
-            }
-        });
+    
     </script>
 
 
