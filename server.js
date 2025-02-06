@@ -2,11 +2,6 @@ const express = require('express');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en puerto ${PORT}`);
-});
 
 // Habilitar middleware para JSON
 app.use(express.json());
@@ -19,10 +14,6 @@ const db = new sqlite3.Database(dbPath, (err) => {
         console.error('Error al conectar con la base de datos:', err);
     } else {
         console.log(`Conexión exitosa a la base de datos en: ${dbPath}`);
-        
-        // ... resto del código ...
-    }
-});
         
         // Crear tablas al iniciar
         db.serialize(() => {
@@ -74,7 +65,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
     }
 });
 
-// Ruta POST para login
+// Rutas
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     console.log('Intento de login:', { username, password });
@@ -92,7 +83,6 @@ app.post('/login', (req, res) => {
             }
 
             if (user) {
-                // Login exitoso - registrar en logs
                 db.run(
                     'INSERT INTO access_logs (username, action, ip_address, status) VALUES (?, ?, ?, ?)',
                     [username, 'login', req.ip, 'success'],
@@ -106,7 +96,6 @@ app.post('/login', (req, res) => {
 
                 res.json({ success: true });
             } else {
-                // Login fallido - registrar en logs
                 db.run(
                     'INSERT INTO access_logs (username, action, ip_address, status) VALUES (?, ?, ?, ?)',
                     [username, 'login_attempt', req.ip, 'failed'],
@@ -127,7 +116,6 @@ app.post('/login', (req, res) => {
     );
 });
 
-// Ruta GET para ver logs
 app.get('/api/logs', (req, res) => {
     db.all('SELECT * FROM access_logs ORDER BY timestamp DESC', [], (err, rows) => {
         if (err) {
@@ -142,70 +130,12 @@ app.get('/api/logs', (req, res) => {
     });
 });
 
-
-
-
-
-
-// ... (código existente) ...
-
-// Rutas para Entradas
-app.post('/api/entradas', (req, res) => {
-    const { producto, cantidad, estado } = req.body;
-    db.run('INSERT INTO entradas (producto, cantidad, estado) VALUES (?, ?, ?)',
-        [producto, cantidad, estado],
-        function(err) {
-            if (err) {
-                res.status(500).json({ error: err.message });
-                return;
-            }
-            res.json({ id: this.lastID });
-        });
-});
-
-app.put('/api/entradas/:id', (req, res) => {
-    const { producto, cantidad, estado } = req.body;
-    db.run('UPDATE entradas SET producto = ?, cantidad = ?, estado = ? WHERE id = ?',
-        [producto, cantidad, estado, req.params.id],
-        (err) => {
-            if (err) {
-                res.status(500).json({ error: err.message });
-                return;
-            }
-            res.json({ success: true });
-        });
-});
-
-app.delete('/api/entradas/:id', (req, res) => {
-    db.run('DELETE FROM entradas WHERE id = ?', req.params.id, (err) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        res.json({ success: true });
-    });
-});
-
-// Rutas similares para Asignaciones y Mermas
-// ...
-
-
-
-
-
-
-
-
-
-
-
-// Ruta para página de logs
 app.get('/logs', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'logs.html'));
 });
 
-// Iniciar servidor
-const PORT = 3000;
+// Puerto
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
